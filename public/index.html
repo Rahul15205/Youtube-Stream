@@ -63,7 +63,7 @@
       border-radius: 8px; 
       overflow: hidden; 
       position: relative; 
-      min-height: 250px;
+      min-height: 180px;
       background: #000;
     }
     
@@ -71,7 +71,7 @@
     #remoteVideo { 
       display: block; 
       width: 100%; 
-      height: 250px; 
+      height: 180px; 
       background:#000; 
       object-fit: cover;
       cursor: pointer;
@@ -95,7 +95,7 @@
     #video-container.pip-swapped #localVideo { 
       position: static;
       width: 100%;
-      height: 250px;
+      height: 180px;
       border: none;
       z-index: 1;
       border-radius: 8px;
@@ -151,9 +151,14 @@
       #youtubeUrl { width: 100%; min-width: auto !important; }
       #roomId, #username { flex: 1; min-width: 120px; }
       #chat { height: 400px; }
-      #messages { height: 200px; min-height: 150px; }
-      /* Adjust chat when video is active */
-      #video-container:not([style*="display: none"]) ~ #messages { height: 150px; min-height: 120px; }
+      #messages { height: 180px; min-height: 120px; }
+      /* Adjust chat when video is active - ensure message box stays visible */
+      #video-container:not([style*="display: none"]) ~ #messages { height: 120px; min-height: 100px; }
+      
+      /* Smaller video on mobile to preserve chat space */
+      #video-container { min-height: 150px !important; }
+      #remoteVideo { height: 150px !important; }
+      #video-container.pip-swapped #localVideo { height: 150px !important; }
       .row { gap: 8px; }
       input[type="text"] { -webkit-appearance: none; -webkit-border-radius: 10px; }
       

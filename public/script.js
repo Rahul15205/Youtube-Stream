@@ -754,13 +754,25 @@ function startCallDurationTimer() {
   }, 1000);
 }
 
+// Simple test function accessible from console
+window.testSwap = function() {
+  console.log('📝 TEST: Manual swap triggered');
+  const container = document.getElementById('video-container');
+  if (container) {
+    container.classList.toggle('pip-swapped');
+    console.log('✅ TEST: Toggled pip-swapped class');
+  }
+};
+
 // Swap between local and remote video (Picture-in-Picture)
 function swapVideos(event) {
   console.log('🔄 Video swap function called');
+  console.log('Event:', event ? event.type : 'No event');
   
   if (event) {
     event.preventDefault();
     event.stopPropagation();
+    console.log('✅ Event prevented');
   }
   
   const container = document.getElementById('video-container');
@@ -769,23 +781,22 @@ function swapVideos(event) {
     return;
   }
   
+  console.log('🔍 Container found:', container);
   const isSwapped = container.classList.contains('pip-swapped');
-  console.log('Current swap state:', isSwapped ? 'Local main' : 'Remote main');
+  console.log('🔍 Current classes:', container.className);
+  console.log('🔍 Is swapped:', isSwapped);
   
   if (isSwapped) {
     container.classList.remove('pip-swapped');
     logStatus('👥 Remote video in main view');
-    console.log('✅ Swapped to: Remote video main, Local video PiP');
+    console.log('✅ Removed pip-swapped class');
   } else {
     container.classList.add('pip-swapped');
     logStatus('😊 Your video in main view');
-    console.log('✅ Swapped to: Local video main, Remote video PiP');
+    console.log('✅ Added pip-swapped class');
   }
   
-  // Force a visual update
-  container.style.display = 'none';
-  container.offsetHeight; // Force reflow
-  container.style.display = 'block';
+  console.log('🔍 Final classes:', container.className);
 }
 
 // ---------- Helpers ----------
@@ -882,27 +893,45 @@ swapBtn.addEventListener("click", swapVideos);
 function setupVideoSwap() {
   console.log('🔍 Setting up video swap listeners');
   
-  const localVideoEl = document.getElementById('localVideo');
-  const remoteVideoEl = document.getElementById('remoteVideo');
-  
-  if (localVideoEl && remoteVideoEl) {
-    // Remove any existing listeners first
-    localVideoEl.removeEventListener('click', swapVideos);
-    localVideoEl.removeEventListener('touchend', swapVideos);
-    remoteVideoEl.removeEventListener('click', swapVideos);
-    remoteVideoEl.removeEventListener('touchend', swapVideos);
+  setTimeout(() => {
+    const localVideoEl = document.getElementById('localVideo');
+    const remoteVideoEl = document.getElementById('remoteVideo');
     
-    // Add fresh listeners
-    localVideoEl.addEventListener('click', swapVideos);
-    localVideoEl.addEventListener('touchend', swapVideos);
-    remoteVideoEl.addEventListener('click', swapVideos);
-    remoteVideoEl.addEventListener('touchend', swapVideos);
+    console.log('🔍 Local video element:', localVideoEl);
+    console.log('🔍 Remote video element:', remoteVideoEl);
     
-    console.log('✅ Video swap listeners added successfully');
-  } else {
-    console.warn('⚠️ Video elements not found for swap setup');
-  }
+    if (localVideoEl && remoteVideoEl) {
+      // Simple click handlers
+      localVideoEl.onclick = function(e) {
+        console.log('🔄 Local video clicked');
+        swapVideos(e);
+      };
+      
+      remoteVideoEl.onclick = function(e) {
+        console.log('🔄 Remote video clicked');
+        swapVideos(e);
+      };
+      
+      // Touch handlers for mobile
+      localVideoEl.ontouchend = function(e) {
+        console.log('🔄 Local video touched');
+        swapVideos(e);
+      };
+      
+      remoteVideoEl.ontouchend = function(e) {
+        console.log('🔄 Remote video touched');
+        swapVideos(e);
+      };
+      
+      console.log('✅ Video swap handlers attached directly');
+    } else {
+      console.warn('⚠️ Video elements not found:', {localVideoEl, remoteVideoEl});
+    }
+  }, 100);
 }
+
+// Make setupVideoSwap globally accessible for testing
+window.setupVideoSwap = setupVideoSwap;
 
 // Call setup when DOM is ready
 if (document.readyState === 'loading') {
