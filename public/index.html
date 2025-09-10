@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Watch Together (WebRTC + YouTube)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    html { height: 100vh; }
+    body { margin: 0; background:#0b0f14; color:#e6edf3; min-height: 100vh; display: flex; flex-direction: column; }
+    main { flex: 1; overflow: hidden; }
+    header { padding: 12px 16px; border-bottom: 1px solid #22303c; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    input, button, textarea { background:#0f1720; color:#e6edf3; border:1px solid #22303c; border-radius:10px; padding:10px 12px; font-size:16px; }
+    input::placeholder, textarea::placeholder { color:#8091a7; }
+    button { cursor:pointer; min-height:44px; }
+    button.primary { background:#1f6feb; border-color:#1f6feb; }
+    button:disabled { opacity:0.5; cursor:not-allowed; background:#2a2a2a !important; color:#666 !important; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .spacer { flex:1; min-width:100%; order:1; }
+    .container { display:grid; grid-template-columns: 1fr; gap:16px; padding:16px; }
+    
+    /* Desktop layout */
+    @media (min-width: 768px) {
+      .container { grid-template-columns: 2fr 1fr; }
+      .spacer { min-width:auto; order:0; }
+      input, button, textarea { font-size:14px; }
+      button { min-height:auto; }
+    }
+    .panel { background:#0f1720; border:1px solid #22303c; border-radius:16px; padding:12px; }
+    #player-container { aspect-ratio: 16/9; position: relative; }
+    #player { width:100%; height:100%; border:none; border-radius:12px; overflow:hidden; }
+    #chat { display:flex; flex-direction:column; height:100%; }
+    #messages { flex:1; overflow:auto; padding:8px; border:1px solid #22303c; border-radius:12px; background:#0b121a; }
+    .msg { margin-bottom:10px; }
+    .meta { font-size:12px; color:#93a3b8; }
+    .me .bubble { background:#123; }
+    .bubble { padding:8px 10px; background:#111a24; border:1px solid #22303c; border-radius:10px; }
+    #chat-input-row { display:flex; gap:8px; margin-top:8px; }
+    #status { font-size:12px; color:#93a3b8; }
+    .grid-controls { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px; }
+    .grid-controls button:last-child { grid-column: 1 / -1; }
+    .hint { font-size:12px; color:#93a3b8; line-height:1.4; }
+    
+    /* Desktop controls layout */
+    @media (min-width: 768px) {
+      .grid-controls { grid-template-columns: 1fr 1fr 1fr; }
+      .grid-controls button:last-child { grid-column: auto; }
+    }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .loading-spinner { animation: spin 2s linear infinite; display: inline-block; }
+    
+    /* Call controls styling */
+    .call-controls { display: flex; gap: 4px; }
+    .call-controls button { padding: 6px 8px; font-size: 14px; }
+    #in-call-controls button { transition: all 0.2s ease; }
+    #in-call-controls button:hover { transform: scale(1.1); }
+    #in-call-controls button.muted { background: #dc3545; border-color: #dc3545; }
+    #hangupBtn:hover { background: #c82333 !important; border-color: #bd2130 !important; }
+    
+    /* Video elements */
+    #video-container { border: 1px solid #22303c; border-radius: 8px; overflow: hidden; }
+    #remoteVideo { display: block; }
+    #localVideo { z-index: 10; cursor: pointer; }
+    #localVideo:hover { opacity: 0.8; }
+    
+    /* Touch and mobile-friendly improvements */
+    button:active { transform: scale(0.98); }
+    input:focus { outline: 2px solid #1f6feb; outline-offset: 2px; }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      body { -webkit-text-size-adjust: 100%; }
+      .container { padding: 12px; }
+      header { padding: 12px; }
+      .panel { padding: 12px; }
+      #youtubeUrl { width: 100%; min-width: auto !important; }
+      #roomId, #username { flex: 1; min-width: 120px; }
+      #chat { height: 400px; }
+      #messages { height: 300px; min-height: 200px; }
+      .row { gap: 8px; }
+      input[type="text"] { -webkit-appearance: none; -webkit-border-radius: 10px; }
+      
+      /* Better touch targets */
+      button { padding: 12px 16px; min-width: 60px; }
+      input { padding: 12px; }
+      
+      /* Prevent zoom on input focus */
+      input, textarea, select { font-size: 16px !important; }
+      
+      /* Better message bubbles on mobile */
+      .bubble { max-width: calc(100% - 20px); word-wrap: break-word; }
+      
+      /* Mobile call controls */
+      .call-controls { gap: 2px; }
+      .call-controls button { padding: 4px 6px; font-size: 12px; }
+      #in-call-controls button { width: 36px; height: 36px; font-size: 14px; }
+      #video-container #localVideo { width: 60px; height: 45px; bottom: 4px; right: 4px; }
+      
+      /* Stack controls vertically on very small screens */
+      @media (max-width: 480px) {
+        .row { flex-direction: column; align-items: stretch; }
+        .row input, .row button { width: 100%; }
+        .grid-controls { grid-template-columns: 1fr; }
+        .grid-controls button:last-child { grid-column: 1; }
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <input id="roomId" placeholder="Room ID (share with friend)" />
+      <input id="username" placeholder="Your name" />
+      <button id="connectBtn" class="primary">Connect</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="row">
+      <input id="youtubeUrl" placeholder="Paste YouTube URL (e.g., https://youtu.be/VIDEO_ID)" style="min-width:280px;" />
+      <button id="loadBtn">Load Video</button>
+    </div>
+    <div style="width:100%; margin-top:8px;">
+      <span id="status">Not connected</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div id="player-container">
+        <div id="player"></div>
+        <div id="player-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #93a3b8; text-align: center; font-size: 14px;">
+          <div class="loading-spinner" style="margin-bottom: 8px; font-size: 20px;">🔄</div>
+          <div>Loading YouTube Player...</div>
+        </div>
+      </div>
+      <div class="grid-controls">
+        <button id="playBtn">Play ▶</button>
+        <button id="pauseBtn">Pause ⏸</button>
+        <button id="syncBtn">Force Sync 🔄</button>
+      </div>
+      <div class="hint" style="margin-top:6px;">
+        <strong>How to use:</strong> Share the same Room ID with a friend, both click Connect, then load a YouTube video. Controls sync instantly via WebRTC!
+      </div>
+    </section>
+
+    <aside class="panel" id="chat">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 style="margin:0;">Chat</h3>
+        <div class="call-controls">
+          <button id="audioCallBtn" title="Audio Call" style="padding:6px 8px; font-size:14px;">📞</button>
+          <button id="videoCallBtn" title="Video Call" style="padding:6px 8px; font-size:14px;">📹</button>
+        </div>
+      </div>
+      
+      <!-- Call status bar -->
+      <div id="call-status" style="display:none; background:#1a2332; border:1px solid #22303c; border-radius:8px; padding:8px; margin-bottom:8px; text-align:center; font-size:12px;">
+        <span id="call-status-text">Connecting...</span>
+        <div id="call-duration" style="color:#93a3b8; margin-top:2px;"></div>
+      </div>
+      
+      <!-- In-call controls -->
+      <div id="in-call-controls" style="display:none; margin-bottom:8px; text-align:center;">
+        <button id="muteBtn" title="Mute/Unmute" style="padding:8px; margin:0 4px; font-size:16px; border-radius:50%; width:40px; height:40px;">🎤</button>
+        <button id="cameraBtn" title="Camera On/Off" style="padding:8px; margin:0 4px; font-size:16px; border-radius:50%; width:40px; height:40px;">📷</button>
+        <button id="hangupBtn" title="End Call" style="padding:8px; margin:0 4px; font-size:16px; border-radius:50%; width:40px; height:40px; background:#dc3545; border-color:#dc3545;">📞</button>
+      </div>
+      
+      <!-- Video call display -->
+      <div id="video-container" style="display:none; margin-bottom:8px; position:relative;">
+        <video id="remoteVideo" autoplay playsinline style="width:100%; height:150px; background:#000; border-radius:8px; object-fit:cover;"></video>
+        <video id="localVideo" autoplay playsinline muted style="position:absolute; bottom:8px; right:8px; width:80px; height:60px; background:#000; border-radius:6px; object-fit:cover; border:2px solid #22303c;"></video>
+      </div>
+      
+      <div id="messages" aria-live="polite"></div>
+      <div id="chat-input-row">
+        <input id="chatInput" placeholder="Type a message and press Enter" style="flex:1;" />
+        <button id="sendBtn" style="white-space:nowrap;">Send</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Socket.io client (served by server.js) -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- App logic -->
+  <script src="./script.js"></script>
+</body>
+</html>

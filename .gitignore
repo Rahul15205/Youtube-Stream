@@ -1,0 +1,33 @@
+# Node.js dependencies
+/node_modules
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Build and cache
+/dist
+/.parcel-cache
+/.cache
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Optional lock files (agar tu sirf ek hi use karta hai to baaki ignore kar sakta hai)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
