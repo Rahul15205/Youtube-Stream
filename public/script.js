@@ -23,6 +23,7 @@ const videoCallBtn = document.getElementById("videoCallBtn");
 const muteBtn = document.getElementById("muteBtn");
 const cameraBtn = document.getElementById("cameraBtn");
 const hangupBtn = document.getElementById("hangupBtn");
+const swapBtn = document.getElementById("swapBtn");
 const callStatusEl = document.getElementById("call-status");
 const callStatusText = document.getElementById("call-status-text");
 const callDurationEl = document.getElementById("call-duration");
@@ -750,16 +751,22 @@ function startCallDurationTimer() {
 }
 
 // Swap between local and remote video (Picture-in-Picture)
-function swapVideos() {
+function swapVideos(event) {
+  console.log('Video swap triggered');
+  event?.preventDefault();
+  event?.stopPropagation();
+  
   const container = videoContainer;
   const isSwapped = container.classList.contains('pip-swapped');
   
   if (isSwapped) {
     container.classList.remove('pip-swapped');
     logStatus('Remote video in main view');
+    console.log('Swapped to remote main view');
   } else {
     container.classList.add('pip-swapped');
     logStatus('Local video in main view');
+    console.log('Swapped to local main view');
   }
 }
 
@@ -851,10 +858,19 @@ videoCallBtn.addEventListener("click", () => startCall(true));
 muteBtn.addEventListener("click", toggleMute);
 cameraBtn.addEventListener("click", toggleCamera);
 hangupBtn.addEventListener("click", endCall);
+swapBtn.addEventListener("click", swapVideos);
 
-// PiP swap functionality - click on small video to make it full screen
-localVideo.addEventListener("click", swapVideos);
-remoteVideo.addEventListener("click", swapVideos);
+// PiP swap functionality - click on any video to swap views
+function setupVideoSwap() {
+  console.log('Setting up video swap listeners');
+  localVideo.addEventListener("click", swapVideos);
+  localVideo.addEventListener("touchend", swapVideos);
+  remoteVideo.addEventListener("click", swapVideos);
+  remoteVideo.addEventListener("touchend", swapVideos);
+}
+
+// Call setup when page loads
+setupVideoSwap();
 
 // Mobile-friendly helpers
 function isMobile() {

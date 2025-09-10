@@ -58,14 +58,14 @@
     #hangupBtn:hover { background: #c82333 !important; border-color: #bd2130 !important; }
     
     /* Video elements */
-    #video-container { border: 1px solid #22303c; border-radius: 8px; overflow: hidden; }
-    #remoteVideo { display: block; width: 100%; aspect-ratio: 16/9; height: auto; background:#000; object-fit: cover; }
-    #localVideo { z-index: 10; cursor: pointer; position:absolute; bottom:8px; right:8px; width:120px; height:90px; background:#000; border-radius:6px; object-fit:cover; border:2px solid #22303c; }
+    #video-container { border: 1px solid #22303c; border-radius: 8px; overflow: hidden; position: relative; min-height: 200px; }
+    #remoteVideo { display: block; width: 100%; height: 200px; background:#000; object-fit: cover; }
+    #localVideo { z-index: 10; cursor: pointer; position:absolute; bottom:8px; right:8px; width:100px; height:75px; background:#000; border-radius:6px; object-fit:cover; border:2px solid #22303c; }
     #localVideo:hover { opacity: 0.8; }
     
     /* Swap PiP: make local full and remote small */
-    #video-container.pip-swapped #localVideo { position: static; width: 100%; height: auto; aspect-ratio: 16/9; border: none; }
-    #video-container.pip-swapped #remoteVideo { position:absolute; bottom:8px; right:8px; width:120px; height:90px; border-radius:6px; border:2px solid #22303c; }
+    #video-container.pip-swapped #localVideo { position: static; width: 100%; height: 200px; border: none; z-index: 1; }
+    #video-container.pip-swapped #remoteVideo { position:absolute; bottom:8px; right:8px; width:100px; height:75px; border-radius:6px; border:2px solid #22303c; z-index: 10; }
     
     /* Video labels */
     .video-label { pointer-events: none; }
@@ -105,13 +105,16 @@
       .call-controls { gap: 2px; }
       .call-controls button { padding: 4px 6px; font-size: 12px; }
       #in-call-controls button { width: 36px; height: 36px; font-size: 14px; }
-      /* Make remote video larger on mobile */
-      #remoteVideo { aspect-ratio: 16/9; }
-      #video-container { max-height: none; }
+      /* Mobile video improvements */
+      #video-container { min-height: 180px; }
+      #remoteVideo { height: 180px; }
       #video-container #localVideo { width: 80px; height: 60px; bottom: 4px; right: 4px; }
+      #video-container.pip-swapped #localVideo { height: 180px; }
       #video-container.pip-swapped #remoteVideo { width: 80px; height: 60px; }
-      /* Add tap indication */
-      #video-container video:active { transform: scale(0.98); }
+      /* Add tap indication and make videos more touchable */
+      #video-container video { cursor: pointer; transition: transform 0.1s ease; }
+      #video-container video:active { transform: scale(0.95); }
+      #video-container video:hover { opacity: 0.9; }
       
       /* Stack controls vertically on very small screens */
       @media (max-width: 480px) {
@@ -179,6 +182,7 @@
         <button id="muteBtn" title="Mute/Unmute" style="padding:8px; margin:0 4px; font-size:16px; border-radius:50%; width:40px; height:40px;">🎤</button>
         <button id="cameraBtn" title="Camera On/Off" style="padding:8px; margin:0 4px; font-size:16px; border-radius:50%; width:40px; height:40px;">📷</button>
         <button id="hangupBtn" title="End Call" style="padding:8px; margin:0 4px; font-size:16px; border-radius:50%; width:40px; height:40px; background:#dc3545; border-color:#dc3545;">📞</button>
+        <button id="swapBtn" title="Swap Videos" style="padding:8px; margin:0 4px; font-size:16px; border-radius:50%; width:40px; height:40px;">🔄</button>
       </div>
       
       <!-- Video call display -->
@@ -186,7 +190,7 @@
         <video id="remoteVideo" autoplay playsinline></video>
         <div class="video-label remote-label" style="position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.7); color:white; padding:4px 8px; border-radius:4px; font-size:11px; z-index:5;">Friend</div>
         <video id="localVideo" autoplay playsinline muted></video>
-        <div class="video-label local-label" style="position:absolute; bottom:70px; right:8px; background:rgba(0,0,0,0.7); color:white; padding:2px 6px; border-radius:3px; font-size:10px; z-index:15;">You</div>
+        <div class="video-label local-label" style="position:absolute; bottom:68px; right:8px; background:rgba(0,0,0,0.7); color:white; padding:2px 6px; border-radius:3px; font-size:10px; z-index:15;">You</div>
       </div>
       
       <div id="messages" aria-live="polite"></div>
