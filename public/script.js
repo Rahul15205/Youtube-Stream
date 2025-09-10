@@ -724,8 +724,12 @@ function updateCallUI() {
       inCallControls.style.display = 'block';
       
       // Show video container if there's a video track
-      const hasVideo = localStream?.getVideoTracks().length > 0 || remoteStream?.getVideoTracks().length > 0;
+      const hasVideo = (localStream && localStream.getVideoTracks().some(t => t.enabled)) ||
+                       (remoteStream && remoteStream.getVideoTracks && remoteStream.getVideoTracks().length > 0);
       videoContainer.style.display = hasVideo ? 'block' : 'none';
+      
+      // Ensure swap listeners are ready
+      setupVideoSwap();
     }
   }
   
@@ -752,22 +756,36 @@ function startCallDurationTimer() {
 
 // Swap between local and remote video (Picture-in-Picture)
 function swapVideos(event) {
-  console.log('Video swap triggered');
-  event?.preventDefault();
-  event?.stopPropagation();
+  console.log('🔄 Video swap function called');
   
-  const container = videoContainer;
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  
+  const container = document.getElementById('video-container');
+  if (!container) {
+    console.error('❌ Video container not found');
+    return;
+  }
+  
   const isSwapped = container.classList.contains('pip-swapped');
+  console.log('Current swap state:', isSwapped ? 'Local main' : 'Remote main');
   
   if (isSwapped) {
     container.classList.remove('pip-swapped');
-    logStatus('Remote video in main view');
-    console.log('Swapped to remote main view');
+    logStatus('👥 Remote video in main view');
+    console.log('✅ Swapped to: Remote video main, Local video PiP');
   } else {
     container.classList.add('pip-swapped');
-    logStatus('Local video in main view');
-    console.log('Swapped to local main view');
+    logStatus('😊 Your video in main view');
+    console.log('✅ Swapped to: Local video main, Remote video PiP');
   }
+  
+  // Force a visual update
+  container.style.display = 'none';
+  container.offsetHeight; // Force reflow
+  container.style.display = 'block';
 }
 
 // ---------- Helpers ----------
@@ -860,17 +878,38 @@ cameraBtn.addEventListener("click", toggleCamera);
 hangupBtn.addEventListener("click", endCall);
 swapBtn.addEventListener("click", swapVideos);
 
-// PiP swap functionality - click on any video to swap views
+// Setup video swap event listeners
 function setupVideoSwap() {
-  console.log('Setting up video swap listeners');
-  localVideo.addEventListener("click", swapVideos);
-  localVideo.addEventListener("touchend", swapVideos);
-  remoteVideo.addEventListener("click", swapVideos);
-  remoteVideo.addEventListener("touchend", swapVideos);
+  console.log('🔍 Setting up video swap listeners');
+  
+  const localVideoEl = document.getElementById('localVideo');
+  const remoteVideoEl = document.getElementById('remoteVideo');
+  
+  if (localVideoEl && remoteVideoEl) {
+    // Remove any existing listeners first
+    localVideoEl.removeEventListener('click', swapVideos);
+    localVideoEl.removeEventListener('touchend', swapVideos);
+    remoteVideoEl.removeEventListener('click', swapVideos);
+    remoteVideoEl.removeEventListener('touchend', swapVideos);
+    
+    // Add fresh listeners
+    localVideoEl.addEventListener('click', swapVideos);
+    localVideoEl.addEventListener('touchend', swapVideos);
+    remoteVideoEl.addEventListener('click', swapVideos);
+    remoteVideoEl.addEventListener('touchend', swapVideos);
+    
+    console.log('✅ Video swap listeners added successfully');
+  } else {
+    console.warn('⚠️ Video elements not found for swap setup');
+  }
 }
 
-// Call setup when page loads
-setupVideoSwap();
+// Call setup when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupVideoSwap);
+} else {
+  setupVideoSwap();
+}
 
 // Mobile-friendly helpers
 function isMobile() {
