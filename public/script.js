@@ -749,6 +749,20 @@ function startCallDurationTimer() {
   }, 1000);
 }
 
+// Swap between local and remote video (Picture-in-Picture)
+function swapVideos() {
+  const container = videoContainer;
+  const isSwapped = container.classList.contains('pip-swapped');
+  
+  if (isSwapped) {
+    container.classList.remove('pip-swapped');
+    logStatus('Remote video in main view');
+  } else {
+    container.classList.add('pip-swapped');
+    logStatus('Local video in main view');
+  }
+}
+
 // ---------- Helpers ----------
 function updateButtonStates() {
   // Enable/disable buttons based on player and connection state
@@ -837,6 +851,10 @@ videoCallBtn.addEventListener("click", () => startCall(true));
 muteBtn.addEventListener("click", toggleMute);
 cameraBtn.addEventListener("click", toggleCamera);
 hangupBtn.addEventListener("click", endCall);
+
+// PiP swap functionality - click on small video to make it full screen
+localVideo.addEventListener("click", swapVideos);
+remoteVideo.addEventListener("click", swapVideos);
 
 // Mobile-friendly helpers
 function isMobile() {
